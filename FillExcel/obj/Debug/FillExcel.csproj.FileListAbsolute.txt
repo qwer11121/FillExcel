@@ -1,0 +1,14 @@
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.csprojResolveAssemblyReference.cache
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.Form1.resources
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.Properties.Resources.resources
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.csproj.GenerateResource.Cache
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.csproj.ResolveComReference.cache
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.AboutBox.resources
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\FillExcel.exe.config
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\FillExcel.exe
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\FillExcel.pdb
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.exe
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.pdb
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\Tools.dll
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\Tools.pdb
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.ImageListItem.resources
