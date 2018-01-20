@@ -12,3 +12,4 @@ C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\
 C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\Tools.dll
 C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\bin\Debug\Tools.pdb
 C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.ImageListItem.resources
+C:\Users\kk198\Documents\Visual Studio 2017\Projects\CSharp\FillExcel\FillExcel\FillExcel\obj\Debug\FillExcel.ProgressForm.resources

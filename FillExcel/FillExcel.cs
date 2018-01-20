@@ -10,11 +10,14 @@ using System.Diagnostics;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Threading;
+using Tools;
 
 namespace FillExcel
-{    
+{
     public class FillExcel
     {
+        // default value if configure file does not exist
         int groupPicCount = 6;    // 6 pictures in each group
         int groupColumnCount = 2;    // 2 column in each group
         int picBoxRowCount = 14;    // 14 rows in a picture box
@@ -35,6 +38,8 @@ namespace FillExcel
         int DOC_TITLE_COLUMN_INDEX = 1;
         int ALERT_COLOR_CELL_ROW_INDEX = 4;
         int ALERT_COLOR_CELL_COLUMN_INDEX = 1;
+        dynamic STANDARD_ROW_HEIGHT = 13.5;
+        double PICTURE_MARGIN = 15;
 
         int currentRow = 6;
 
@@ -50,49 +55,96 @@ namespace FillExcel
         int picCount = 0;
         dynamic alertColor = 0;
 
+        public delegate void ProgressUpdatedHandler(int value, string message);
+        public event ProgressUpdatedHandler ProgressUpdated;
+        public delegate void OnExitEventHandler(string message);
+        public event OnExitEventHandler Exit;
+
         public FillExcel()
         {
             app = new Application();
             app.DisplayAlerts = false;
+            //app.Visible = true;
             wbks = app.Workbooks;
         }
 
         public void LoadConfig(string path)
         {
-            string[] str = File.ReadAllLines(path);
-            string[] str2 = new string[str.Count() * 2];
-            for (int i = 0; i < str.Count(); i++)
+            try
             {
-                str2[i * 2] = str[i].Split('=')[0];
-                str2[i * 2 + 1] = str[i].Split('=')[1];
+                /*
+                string[] str = File.ReadAllLines(path);
+                string[] str2 = new string[str.Count() * 2];
+                for (int i = 0; i < str.Count(); i++)
+                {
+                    str2[i * 2] = str[i].Split('=')[0];
+                    str2[i * 2 + 1] = str[i].Split('=')[1];
+                }
+
+                groupPicCount = Convert.ToInt16(str2[1]);
+                groupColumnCount = Convert.ToInt16(str2[3]);
+                picBoxRowCount = Convert.ToInt16(str2[5]);
+                pageHeight = Convert.ToInt16(str2[7]);
+                pageHeaderHeight = Convert.ToInt16(str2[9]);
+                pageVerticalOffset = Convert.ToInt16(str2[11]);
+                picBoxColumnCount = Convert.ToInt16(str2[13]);
+                titleBoxRowCount = Convert.ToInt16(str2[15]);
+                endBoxColumnCount = Convert.ToInt16(str2[17]);
+                endBoxRowCount = Convert.ToInt16(str2[19]);
+                INSPECTION_TIME_ROW_INDEX = Convert.ToInt16(str2[21]);
+                INSPECTION_TIME_COLUMN_INDEX = Convert.ToInt16(str2[23]);
+                ITEM_NO_ROW_INDEX = Convert.ToInt16(str2[25]);
+                ITEM_NO_COLUMN_INDEX = Convert.ToInt16(str2[27]);
+                FORTH_LINE_ROW_INDEX = Convert.ToInt16(str2[29]);
+                FORTH_LINE_COLUMN_INDEX = Convert.ToInt16(str2[31]);
+                DOC_TITLE_ROW_INDEX = Convert.ToInt16(str2[33]);
+                DOC_TITLE_COLUMN_INDEX = Convert.ToInt16(str2[35]);
+                ALERT_COLOR_CELL_ROW_INDEX = Convert.ToInt16(str2[37]);
+                ALERT_COLOR_CELL_COLUMN_INDEX = Convert.ToInt16(str2[39]);
+                PICTURE_MARGIN = Convert.ToDouble(str2[41]);
+                STANDARD_ROW_HEIGHT = Convert.ToDouble(str2[43]);
+                */
+
+                INI configFile = new INI(path);
+                groupPicCount = Convert.ToInt16(configFile.GetValue("groupPicCount"));
+                groupColumnCount = Convert.ToInt16(configFile.GetValue("groupColumnCount"));
+                picBoxRowCount = Convert.ToInt16(configFile.GetValue("picBoxRowCount"));
+                pageHeight = Convert.ToInt16(configFile.GetValue("pageHeight"));
+                pageHeaderHeight = Convert.ToInt16(configFile.GetValue("pageHeaderHeight"));
+                pageVerticalOffset = Convert.ToInt16(configFile.GetValue("pageVerticalOffset"));
+                picBoxColumnCount = Convert.ToInt16(configFile.GetValue("picBoxColumnCount"));
+                titleBoxRowCount = Convert.ToInt16(configFile.GetValue("titleBoxRowCount"));
+                endBoxColumnCount = Convert.ToInt16(configFile.GetValue("endBoxColumnCount"));
+                endBoxRowCount = Convert.ToInt16(configFile.GetValue("endBoxRowCount"));
+                INSPECTION_TIME_ROW_INDEX = Convert.ToInt16(configFile.GetValue("INSPECTION_TIME_ROW_INDEX"));
+                INSPECTION_TIME_COLUMN_INDEX = Convert.ToInt16(configFile.GetValue("INSPECTION_TIME_COLUMN_INDEX"));
+                ITEM_NO_ROW_INDEX = Convert.ToInt16(configFile.GetValue("ITEM_NO_ROW_INDEX"));
+                ITEM_NO_COLUMN_INDEX = Convert.ToInt16(configFile.GetValue("ITEM_NO_COLUMN_INDEX"));
+                FORTH_LINE_ROW_INDEX = Convert.ToInt16(configFile.GetValue("FORTH_LINE_ROW_INDEX"));
+                FORTH_LINE_COLUMN_INDEX = Convert.ToInt16(configFile.GetValue("FORTH_LINE_COLUMN_INDEX"));
+                DOC_TITLE_ROW_INDEX = Convert.ToInt16(configFile.GetValue("DOC_TITLE_ROW_INDEX"));
+                DOC_TITLE_COLUMN_INDEX = Convert.ToInt16(configFile.GetValue("DOC_TITLE_COLUMN_INDEX"));
+                ALERT_COLOR_CELL_ROW_INDEX = Convert.ToInt16(configFile.GetValue("ALERT_COLOR_CELL_ROW_INDEX"));
+                ALERT_COLOR_CELL_COLUMN_INDEX = Convert.ToInt16(configFile.GetValue("ALERT_COLOR_CELL_COLUMN_INDEX"));
+                PICTURE_MARGIN = Convert.ToDouble(configFile.GetValue("PICTURE_MARGIN"));
+                STANDARD_ROW_HEIGHT = Convert.ToDouble(configFile.GetValue("STANDARD_ROW_HEIGHT"));
+
             }
+            catch (Exception err)
+            {
+                Exit(err.Message);
+                return;
+            }
+            finally
+            {
+                ProgressUpdated(2, "配置加载完成");
 
-            groupPicCount = Convert.ToInt16(str2[1]);
-            groupColumnCount = Convert.ToInt16(str2[3]);
-            picBoxRowCount = Convert.ToInt16(str2[5]);
-            pageHeight = Convert.ToInt16(str2[7]);
-            pageHeaderHeight = Convert.ToInt16(str2[9]);
-            pageVerticalOffset = Convert.ToInt16(str2[11]);
-            picBoxColumnCount = Convert.ToInt16(str2[13]);
-            titleBoxRowCount = Convert.ToInt16(str2[15]);
-            endBoxColumnCount = Convert.ToInt16(str2[17]);
-            endBoxRowCount = Convert.ToInt16(str2[19]);
-            INSPECTION_TIME_ROW_INDEX = Convert.ToInt16(str2[21]);
-            INSPECTION_TIME_COLUMN_INDEX = Convert.ToInt16(str2[23]);
-            ITEM_NO_ROW_INDEX = Convert.ToInt16(str2[25]);
-            ITEM_NO_COLUMN_INDEX = Convert.ToInt16(str2[27]);
-            FORTH_LINE_ROW_INDEX = Convert.ToInt16(str2[29]);
-            FORTH_LINE_COLUMN_INDEX = Convert.ToInt16(str2[31]);
-            DOC_TITLE_ROW_INDEX = Convert.ToInt16(str2[33]);
-            DOC_TITLE_COLUMN_INDEX = Convert.ToInt16(str2[35]);
-            ALERT_COLOR_CELL_ROW_INDEX = Convert.ToInt16(str2[37]);
-            ALERT_COLOR_CELL_COLUMN_INDEX = Convert.ToInt16(str2[39]);
-
+            }
         }
 
-        public string Fill(string xlsxName, string pdfName = null, string docTitle = null, string forthLine = null, 
-            string[] pictures = null, string[] titles = null, bool[] markAsRed=null,
-            string endText = null, bool markEndTextRed=false, string itemNo = null, string inspectionTime = null)
+        public void Fill(string xlsxName, string pdfName = null, string docTitle = null, string forthLine = null,
+            string[] pictures = null, string[] titles = null, bool[] markAsRed = null,
+            string endText = null, bool markEndTextRed = false, string itemNo = null, string inspectionTime = null)
         {
             string exitCode = "0";
             try
@@ -103,22 +155,25 @@ namespace FillExcel
                 sheets = wbk.Sheets;
                 sheet1 = (Worksheet)sheets.Item[1];
                 sheet1.Name = "WorkSheet";
+
+                SetStandardRowHeight(pictures.Count());
+                //sheet1.Cells[2, 2] = "test";
                 alertColor = GetAlertColor();
+
+                ProgressUpdated(5, "文件创建完成");
+
                 AddPictures(pictures, titles, markAsRed);
 
+                ProgressUpdated(110, "图片填充完成");
+
                 // add end box
-                //int b = pictures.Count() - 1 + groupColumnCount;
-                //int y = b / groupPicCount * pageRowCount + b / groupColumnCount % (groupPicCount / groupColumnCount) * (picBoxRowCount + titleBoxRowCount) + groupSpace + 1;
-                //if(pictures.Count()>4)
-                //{
-                //    y -= 3;
-                //}
-                //AddEndBox(endText, 1, y, markEndTextRed);
                 if (pictures.Count() == 6)
                     currentRow = pageHeaderHeight + 6 / groupColumnCount * (picBoxRowCount + titleBoxRowCount) + 1;
                 else if (pictures.Count() % 6 == 0)
                     currentRow = (pageHeight * (pictures.Count() / 6 - 1) + (groupPicCount / groupColumnCount) * (picBoxRowCount + titleBoxRowCount)) + pageVerticalOffset + 1;
                 AddEndBox(endText, 1, currentRow, markEndTextRed);
+
+                ProgressUpdated(115, "结束语添加完成");
 
                 // add INSPECTION TIME and ITEM NO
                 AddInspectionTime(inspectionTime);
@@ -126,22 +181,31 @@ namespace FillExcel
                 AddDocTitle(docTitle);
                 AddForthLine(forthLine);
 
+                ProgressUpdated(120, "文件信息添加完成");
+
                 // save and export pdf        
                 SaveWorkbook();
                 if (!string.IsNullOrEmpty(pdfName))
                 {
                     ExportPDF(pdfName);
                 }
-                return exitCode;
-            }
-            catch(Exception err)
-            {
-                exitCode = err.Message;
-                return exitCode;
             }
             finally
-            {        
+            {
+                Exit(exitCode);
                 QuitExcel();
+            }
+
+        }
+
+        void SetStandardRowHeight(int pictureCount)
+        {
+            // Set row height to standard row height
+            int pageCount = pictureCount / groupPicCount + 1;
+            int totalRowCount = pageCount * pageHeight;
+            for (int i = 1; i <= totalRowCount; i++)
+            {
+                sheet1.Cells[i, 9].RowHeight = STANDARD_ROW_HEIGHT;
             }
         }
 
@@ -159,9 +223,6 @@ namespace FillExcel
             for(int i=0;i<picCount;i++)
             {
                 x = i % groupColumnCount * picBoxColumnCount + 1;
-                //y = i / groupPicCount * pageRowCount + groupSpace
-                //    + i / groupColumnCount % (groupPicCount / groupColumnCount) * (picBoxRowCount + titleBoxRowCount) + 1;
-                //AddPicture(pictures[i], titles[i], x, y, markAsRed[i]);
                 AddPicture(pictures[i], titles[i], x, currentRow, markAsRed[i]);
                 if(i%groupColumnCount!=0)
                 {
@@ -169,12 +230,13 @@ namespace FillExcel
                 }
                 if ((i + 1) % groupPicCount == 0)
                 {
-                        currentRow = (i + 1) / groupPicCount * pageHeight + pageVerticalOffset + 1;
+                    currentRow = (i + 1) / groupPicCount * pageHeight + pageVerticalOffset + 1;
+                    sheet1.HPageBreaks.Add(sheet1.Cells[currentRow - pageVerticalOffset, 9]);    // add page breake
                 }
+                ProgressUpdated((int)((double)i / (double)picCount * 100.0 + 5.0), string.Format("图片 {0}/{1}", i.ToString(), picCount.ToString()));
             }
             if(pictures.Count()%2==1)
             {
-                //AddPicture(null, null, x + picBoxColumnCount, y, false);
                 AddPicture(null, null, x + picBoxColumnCount, currentRow, false);
                 currentRow += picBoxRowCount + titleBoxRowCount;
             }            
@@ -205,10 +267,12 @@ namespace FillExcel
                 double ratio = (double)img.Width / (double)img.Height;
                 double picWidth = 0;
                 double picHeight = 0;
-                double picTop = picCell.Top + 10;
-                double picLeft = picCell.Left + 10;
-                double boxWidth = picCell.Width - 20;
-                double boxHeight = picCell.Height - 20;
+                double picTop = picCell.Top + PICTURE_MARGIN;
+                double picLeft = picCell.Left + PICTURE_MARGIN;
+                //double boxWidth = picCell.Width - 20;
+                //double boxHeight = picCell.Height - 20;
+                double boxWidth = picCell.Width - PICTURE_MARGIN * 2;
+                double boxHeight = picCell.Height - PICTURE_MARGIN * 2;
                 if (img.Width >= img.Height)
                 {
                     picWidth = boxWidth;
@@ -291,6 +355,8 @@ namespace FillExcel
             range.BorderAround(XlLineStyle.xlContinuous, Excel.XlBorderWeight.xlThin, Excel.XlColorIndex.xlColorIndexAutomatic, System.Drawing.Color.Black.ToArgb());
             // center allign
             range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            // set data format as text
+            range.NumberFormatLocal = "@";
         }
 
         void SaveWorkbook()
@@ -339,5 +405,6 @@ namespace FillExcel
             message = string.Format("[{0}]:\t {1} \r\n", time, message);
             //File.AppendAllText("log.txt", message);
         }
+
     }
 }

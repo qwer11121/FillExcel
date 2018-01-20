@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FillExcel", "FillExcel\FillExcel.csproj", "{7B73685C-4E7B-4276-A635-DBB7243DDE4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools", "..\..\Tools\Tools.csproj", "{86B512BF-58B9-49E2-BA8B-F8A020C42987}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tools", "Tools\Tools.csproj", "{86B512BF-58B9-49E2-BA8B-F8A020C42987}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

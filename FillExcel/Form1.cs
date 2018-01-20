@@ -8,17 +8,25 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace FillExcel
 {
     public partial class Form1 : Form
     {
-        ImageListItem[] c_imageListItems;        
+        ImageListItem[] c_imageListItems;
+        ProgressForm progressForm;
 
         string[] tempPics;
         string[] tempTitles;
         bool[] tempMarkAsRed;
+        string defaultPath;
+        string defaultName;
+        string excelName;
+        string pdfName;
+
+        const string configFilePath = @".\config.ini";
 
         string FormText = "图片填充工具";
 
@@ -26,12 +34,13 @@ namespace FillExcel
         {
             InitializeComponent();
             this.Text = FormText;
+            progressForm = new ProgressForm();
         }
 
         private void c_FillExcel_Click(object sender, EventArgs e)
         {
             // pre-fill check
-            if (c_imageListItems.Count() == 0)
+            if (c_imageListItems is null || c_imageListItems.Count() == 0)
             {
                 MessageBox.Show("没有选中图片");
                 return;
@@ -45,10 +54,10 @@ namespace FillExcel
 
             string inspectionTime = Tools.Tools.DateToStringEn(c_InspectionTime.Value);
 
-            string defaultPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string defaultName = c_DocTitle.Text;
-            string excelName = defaultPath + "\\" + defaultName + ".xlsx";
-            string pdfName = defaultPath + "\\" + defaultName + ".pdf";
+            defaultPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            defaultName = c_DocTitle.Text;
+            excelName = defaultPath + "\\" + defaultName + ".xlsx";
+            pdfName = defaultPath + "\\" + defaultName + ".pdf";
             
             if (!c_UseDefaultFileName.Checked)
             {
@@ -83,30 +92,94 @@ namespace FillExcel
             }
 
             this.Text = FormText + " 处理中...";
+            progressForm.Show();
 
             // start creating excel file
             FillExcel fillExcel = new FillExcel();
-            fillExcel.LoadConfig("config.ini");
+            fillExcel.ProgressUpdated += UpdateProgress;
+            fillExcel.Exit += JobExit;
+
+            fillExcel.LoadConfig(configFilePath);
             bool[] markAsRed = new bool[pics.Count()];
             for(int i=0;i<pics.Count();i++)
             {
                 markAsRed[i] = c_imageListItems[i].MarkAsRed;
             }
 
-            string result = fillExcel.Fill(excelName, pdfName, c_DocTitle.Text, c_ForthLine.Text,
-                pics, titles, markAsRed,
-                c_EndText.Text, c_MarkEndTextRed.Checked, c_ItemNo.Text, inspectionTime);
-            fillExcel = null;
-            if(result=="0")
+            JobParameter jobParameter = new JobParameter();
+            jobParameter.fillExcel = fillExcel;
+            jobParameter.xlsxName = excelName;
+            jobParameter.pdfName = pdfName;
+            jobParameter.docTitle = c_DocTitle.Text;
+            jobParameter.forthLine = c_ForthLine.Text;
+            jobParameter.pictures = pics;
+            jobParameter.titles = titles;
+            jobParameter.markAsRed = markAsRed;
+            jobParameter.endText = c_EndText.Text;
+            jobParameter.markEndTextRed = c_MarkEndTextRed.Checked;
+            jobParameter.itemNo = c_ItemNo.Text;
+            jobParameter.inspectionTime = inspectionTime;
+            
+            Thread jobThread = new Thread(new ParameterizedThreadStart(jobThreadStarter));
+            jobThread.Start(jobParameter);
+
+            this.Text = FormText;         
+        }
+
+        class ProgressStatus
+        {
+            public int value;
+            public string message;
+
+            public ProgressStatus(int value, string message)
             {
-                result = "文件生成完成, 保存于 " + pdfName;
+                this.value = value;
+                this.message = message;
+            }
+        }
+
+        void UpdateProgress(int value, string message)
+        {
+            ProgressStatus progressStatus = new ProgressStatus(value, message);
+            progressForm.Invoke(new Action<ProgressStatus>((x) => { progressForm.UpdateProgress(x.value, x.message); }), progressStatus);
+        }
+
+        void JobExit(string message)
+        {
+            if (message == "0")
+            {
+                progressForm.Invoke(new Action(() => {
+                    progressForm.Visible = false;
+                    progressForm.UpdateProgress(0, string.Empty);
+                }));
+                MessageBox.Show("文件生成完成, 保存于 " + pdfName);               
             }
             else
             {
-                result = "发生错误： " + result;
+                MessageBox.Show("发生错误： " + message);
             }
-            MessageBox.Show(result);
-            this.Text = FormText;
+        }
+
+        class JobParameter
+        {
+            public FillExcel fillExcel;
+            public string xlsxName;
+            public string pdfName = null;
+            public string docTitle = null;
+            public string forthLine = null;
+            public string[] pictures = null;
+            public string[] titles = null;
+            public bool[] markAsRed = null;
+            public string endText = null;
+            public bool markEndTextRed = false;
+            public string itemNo = null;
+            public string inspectionTime = null;
+        }
+
+        void jobThreadStarter(object obj)
+        {
+            JobParameter a = (JobParameter)obj;
+            a.fillExcel.Fill(a.xlsxName, a.pdfName, a.docTitle, a.forthLine, a.pictures, a.titles, a.markAsRed, a.endText, a.markEndTextRed, a.itemNo, a.inspectionTime);
         }
 
         private void c_SelectImage_Click(object sender, EventArgs e)
@@ -362,5 +435,34 @@ namespace FillExcel
             string forthLine = words[words.Count() - 2] + " " + words[words.Count() - 1];
             c_ForthLine.Text = forthLine;
         }
+
+        void ChangeSetting(string key, string message)
+        {
+            Tools.INI configFile = new Tools.INI(configFilePath);
+            string defVal = configFile.GetValue(key);
+
+            Tools.InputBox inputBox = new Tools.InputBox(message, defVal);
+            inputBox.Key = key;
+            inputBox.OKButtonEvent += ChangeSettingComplete;
+
+            inputBox.ShowDialog();
+        }
+
+        void ChangeSettingComplete(string key, string value)
+        {
+            Tools.INI configFile = new Tools.INI(configFilePath);
+            configFile.SetValue(key, value);
+        }
+
+        private void 图片缩放ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ChangeSetting("PICTURE_MARGIN", "图片缩放");
+        }
+
+        private void 行高ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ChangeSetting("STANDARD_ROW_HEIGHT", "行高");
+        }
+
     }
 }
